@@ -1,0 +1,12 @@
+{
+  "name": "hono-datastar",
+  "scripts": {
+    "dev": "bun run --hot src/server.js",
+    "start": "bun run src/server.js",
+    "build": "bun build src/server.js --compile --outfile dist/app"
+  },
+  "dependencies": {
+    "hono": "^4.10.4"
+  },
+  "devDependencies": {}
+}

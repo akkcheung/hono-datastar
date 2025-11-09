@@ -1,0 +1,6 @@
+[entrypoints]
+server = "src/server.js"
+
+[build]
+outdir = "dist"
+
