@@ -24,3 +24,15 @@ export function toggleTodo(id) {
   db.query("UPDATE todos SET done = NOT done WHERE id = ?").run(id);
 }
 
+export function getDoneTodos() {
+  return db.query("SELECT * FROM todos WHERE done = 1 ORDER BY id").all();
+}
+
+export function getTodosCount() {
+  return db.query("SELECT COUNT(*) as count FROM todos").get().count;
+}
+
+export function getDoneTodosCount() {
+  return db.query("SELECT COUNT(*) as count FROM todos WHERE done = 1").get().count;
+}
+
