@@ -6,7 +6,7 @@ import { html } from 'hono/html';
 import { serveStatic } from "hono/bun"; // use `serve-static` for Node
 
 import { getTodos, addTodo, toggleTodo, getDoneTodos, getTodosCount, getDoneTodosCount } from "./db.js";
-import { renderTodos } from "./utils.js";
+import { renderTodos, renderCounts, renderListAndCounts } from "./utils.js";
 
 const app = new Hono();
 
@@ -24,12 +24,13 @@ app.get('/', (c) => {
       </head>
       <body>
         <form
-          data-on:submit="@post('/addTodo', {contentType: 'form'})" >
+          data-on:submit="@post('/addTodo?filter=${c.req.query('filter')}', {contentType: 'form'})" >
           <input name="title" placeholder="New todo..." required />
           <button>Submit</button>
         </form>
 
         ${renderTodos()}
+        ${renderCounts()}
 
         <div id="controls">
           <button data-on:click="@get('/todos?filter=done')">Show Done</button>
@@ -47,24 +48,26 @@ app.get('/', (c) => {
 
 app.get('/todos', (c) => {
   const filter = c.req.query('filter')
-  return c.html(renderTodos(filter));
+  return c.html(renderListAndCounts(filter));
 });
 
 app.post('/addTodo', async (c) => {
+  const filter = c.req.query('filter')
   const body = await c.req.parseBody();
   const title = body.title?.trim();
   // if (title) db.run('INSERT INTO todos (title) VALUES (?)', [title]);
   if (title) addTodo(title)
 
   // return only the updated HTML fragment (partial)
-  return c.html(renderTodos());
+  return c.html(renderListAndCounts(filter));
 });
 
 app.post("/api/toggle/:id", (c) => {
+  const filter = c.req.query('filter')
   toggleTodo(c.req.param("id"));
 
   // return c.json({ ok: true });
-  return c.html(renderTodos());
+  return c.html(renderListAndCounts(filter));
 });
 
 export default app;
