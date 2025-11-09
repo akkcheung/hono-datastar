@@ -7,15 +7,17 @@ export function renderTodos(filter) {
   const total = getTodosCount()
   const done = getDoneTodosCount()
   return html`
-    <ul id="todo-list">
-      ${rows.map((t) => html`
-      <li>
-          <input type="checkbox" ${t.done===0?"":"checked"}
-            data-on:click="@post('/api/toggle/${t.id}?filter=${filter}')"
-          ></input>${t.title}
-      </li>
-      `)}
-    </ul>
-    <p>${done} of ${total} items done</p>
+    <div id="todo-list">
+      <ul>
+        ${rows.map((t) => html`
+        <li>
+            <input type="checkbox" ${t.done===0?"":"checked"}
+              data-on:click="@post('/api/toggle/${t.id}')"
+            ></input>${t.title}
+        </li>
+        `)}
+      </ul>
+      <p>${done} of ${total} items done</p>
+    </div>
   `;
 }

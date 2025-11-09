@@ -14,7 +14,6 @@ const app = new Hono();
 app.use("/public/*", serveStatic({ root: "./" }));
 
 app.get('/', (c) => {
-  const filter = c.req.query('filter')
   return c.html(html`
     <!doctype html>
     <html>
@@ -25,16 +24,16 @@ app.get('/', (c) => {
       </head>
       <body>
         <form
-          data-on:submit="@post('/addTodo?filter=${filter}', {contentType: 'form'})" >
+          data-on:submit="@post('/addTodo', {contentType: 'form'})" >
           <input name="title" placeholder="New todo..." required />
           <button>Submit</button>
         </form>
 
-        ${renderTodos(filter)}
+        ${renderTodos()}
 
         <div id="controls">
-          <button data-on:click="@get('/?filter=done')">Show Done</button>
-          <button data-on:click="@get('/')">Show All</button>
+          <button data-on:click="@get('/todos?filter=done')">Show Done</button>
+          <button data-on:click="@get('/todos')">Show All</button>
         </div>
 
         <script type="module">
@@ -46,23 +45,26 @@ app.get('/', (c) => {
   `);
 });
 
-app.post('/addTodo', async (c) => {
+app.get('/todos', (c) => {
   const filter = c.req.query('filter')
+  return c.html(renderTodos(filter));
+});
+
+app.post('/addTodo', async (c) => {
   const body = await c.req.parseBody();
   const title = body.title?.trim();
   // if (title) db.run('INSERT INTO todos (title) VALUES (?)', [title]);
   if (title) addTodo(title)
 
   // return only the updated HTML fragment (partial)
-  return c.html(renderTodos(filter));
+  return c.html(renderTodos());
 });
 
 app.post("/api/toggle/:id", (c) => {
-  const filter = c.req.query('filter')
   toggleTodo(c.req.param("id"));
 
   // return c.json({ ok: true });
-  return c.html(renderTodos(filter));
+  return c.html(renderTodos());
 });
 
 export default app;
