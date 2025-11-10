@@ -57,10 +57,7 @@ app.get('/', (c) => {
           <button data-on:click="@get('/todos')">Show All</button>
         </div>
 
-        <div data-signals:time_stamp="'00:00:00'">
-            <button data-on:click="@get('/sse')">
-                Start
-            </button>
+        <div data-signals:time_stamp="''" data-init="@get('/sse')">
             <div data-text="$time_stamp"></div>
         </div>
 
