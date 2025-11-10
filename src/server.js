@@ -4,6 +4,9 @@ import Database from 'bun:sqlite';
 import { Hono } from 'hono';
 import { html } from 'hono/html';
 import { serveStatic } from "hono/bun"; // use `serve-static` for Node
+// import { streamSSE } from 'hono/streaming'
+import { stream } from 'hono/streaming'
+
 
 import { getTodos, addTodo, toggleTodo, getDoneTodos, getTodosCount, getDoneTodosCount } from "./db.js";
 import { renderTodos, renderCounts, renderListAndCounts } from "./utils.js";
@@ -12,6 +15,23 @@ const app = new Hono();
 
 // Static files
 app.use("/public/*", serveStatic({ root: "./" }));
+
+app.use('/sse/*', async (c, next) => {
+    c.header('Content-Type', 'text/event-stream');
+    c.header('Cache-Control', 'no-cache');
+    c.header('Connection', 'keep-alive');
+    await next();
+});
+
+app.get('/sse', (c) => {
+    return stream(c, async (stream) => {
+        while (true) {
+            await stream.write('event: datastar-patch-signals\n');
+            await stream.write(`data: signals {time_stamp: '${new Date().toLocaleTimeString()}'}\n\n` );
+            await stream.sleep(500)
+        }
+    })
+});
 
 app.get('/', (c) => {
   return c.html(html`
@@ -35,6 +55,13 @@ app.get('/', (c) => {
         <div id="controls">
           <button data-on:click="@get('/todos?filter=done')">Show Done</button>
           <button data-on:click="@get('/todos')">Show All</button>
+        </div>
+
+        <div data-signals:time_stamp="'00:00:00'">
+            <button data-on:click="@get('/sse')">
+                Start
+            </button>
+            <div data-text="$time_stamp"></div>
         </div>
 
         <script type="module">
