@@ -4,12 +4,16 @@ import Database from 'bun:sqlite';
 import { Hono } from 'hono';
 import { html } from 'hono/html';
 import { serveStatic } from "hono/bun"; // use `serve-static` for Node
-// import { streamSSE } from 'hono/streaming'
+
 import { stream } from 'hono/streaming'
+import { layout } from './layout.js'
 
 
-import { getTodos, addTodo, toggleTodo, getDoneTodos, getTodosCount, getDoneTodosCount } from "./db.js";
 import { renderTodos, renderCounts, renderListAndCounts } from "./utils.js";
+import { renderNames, renderBulkUpdate } from "./utils.js";
+import { addTodo, toggleTodo } from "./db.js";
+
+import { updateStatus } from "./db.js"
 
 const app = new Hono();
 
@@ -17,20 +21,20 @@ const app = new Hono();
 app.use("/public/*", serveStatic({ root: "./" }));
 
 app.use('/sse/*', async (c, next) => {
-    c.header('Content-Type', 'text/event-stream');
-    c.header('Cache-Control', 'no-cache');
-    c.header('Connection', 'keep-alive');
-    await next();
+  c.header('Content-Type', 'text/event-stream');
+  c.header('Cache-Control', 'no-cache');
+  c.header('Connection', 'keep-alive');
+  await next();
 });
 
 app.get('/sse', (c) => {
-    return stream(c, async (stream) => {
-        while (true) {
-            await stream.write('event: datastar-patch-signals\n');
-            await stream.write(`data: signals {time_stamp: '${new Date().toLocaleTimeString()}'}\n\n` );
-            await stream.sleep(500)
-        }
-    })
+  return stream(c, async (stream) => {
+    while (true) {
+      await stream.write('event: datastar-patch-signals\n');
+      await stream.write(`data: signals {time_stamp: '${new Date().toLocaleTimeString()}'}\n\n`);
+      await stream.sleep(500)
+    }
+  })
 });
 
 app.get('/', (c) => {
@@ -94,5 +98,60 @@ app.post("/api/toggle/:id", (c) => {
   return c.html(renderListAndCounts(filter));
 });
 
+app.get('/examples/active_search', (c) => {
+  return c.html(
+    layout({
+      title: "Active Search",
+      body: ` 
+        <input
+            type="text"
+            placeholder="Search..."
+            data-bind:search
+            data-on:input__debounce.200ms="@get('/examples/active_search/search')"
+        />
+      `
+    })
+    + `${renderNames('')}`
+  )
+});
+
+app.get('/examples/active_search/search', (c) => {
+  // console.log('/search')
+
+  // const params = new URL(url).searchParams
+  const encoded = c.req.query('datastar')
+  const decoded = decodeURIComponent(encoded)
+
+  const data = JSON.parse(decoded)
+  console.log(data.search)
+
+  return c.html(
+    `${renderNames(data.search)}`
+  )
+});
+
+app.get('/examples/bulk_update', (c) => {
+  return c.html(
+    layout({
+      title: "Bulk Update",
+      body: renderBulkUpdate()
+    })
+  )
+})
+
+app.put('/examples/bulk_update/', async (c) => {
+  const { selections } = await c.req.json();
+
+  updateStatus(selections)
+
+  return c.html(
+    renderBulkUpdate()
+  )
+})
+
 export default app;
+
+
+
+
 
